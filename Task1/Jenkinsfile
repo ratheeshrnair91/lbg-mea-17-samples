@@ -13,15 +13,35 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh "echo Testing..."
-                sh "sleep 5"
-                sh "echo PASSED"
+                sh "docker network create test || true"
+                sh "docker run -d --name test-app --network test -e YOUR_NAME=$YOUR_NAME $REGISTRY/task1-app:$VERSION"
+                sh "docker run --network test -e HOST=test-app -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'"
+                sh "docker stop \$(docker ps -q) || true"
+                sh "docker rm \$(docker ps -aq) || true"
             }
         }
         stage('Push') {
             steps {
                 sh "gcloud config set account ratheesh-storage-admin@lbg-mea-17.iam.gserviceaccount.com"
                 sh "docker push $REGISTRY/task1-app:$VERSION"
+            }
+        }
+        stage('Test Deploy') {
+            steps {
+                sh """
+                gcloud config set account jenkins-k8s@lbg-mea-17.iam.gserviceaccount.com
+                kubectl create ns task1-test || true
+                sed -e 's,{{YOUR_NAME}},'$YOUR_NAME',g;' Task1/app-config.yml | tee Task1/app-config.yaml
+                rm Task1/app-config.yml
+                sed -e 's,{{VERSION}},'$VERSION',g;' Task1/app-replicas-manifest.yml | tee Task1/app-replicas-manifest.yaml
+                rm Task1/app-replicas-manifest.yml
+                kubectl apply -f Task1 --namespace task1-test
+                sleep 60
+                export HOST=\$(kubectl get service nginx-service --namespace task1-test -o json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"')
+                docker run -e HOST=$HOST -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'
+                docker stop \$(docker ps -q) || true
+                docker rm \$(docker ps -aq) || true
+                """
             }
         }
         stage('Deploy') {
@@ -41,7 +61,9 @@ pipeline {
     post {
         always {
             sh "docker system prune -f"
+            sh "docker rmi \$(docker images -q)"
             sh "gcloud config set account null"
+            cleanWs()
         }
     }
 }
