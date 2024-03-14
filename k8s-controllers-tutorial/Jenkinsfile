@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+    stages {
+        stage('Deploy') {
+            steps {
+                sh "gcloud config set account jenkins-k8s@lbg-mea-17.iam.gserviceaccount.com"
+                sh "kubectl create ns tutorial || true"
+                sh "kubectl apply -f k8s-controllers-tutorial --namespace tutorial"
+                sh "sleep 60"
+                sh "kubectl get services --namespace tutorial"
+            }
+        }
+    }
+    post {
+        always {
+            sh "gcloud config set account null"
+            cleanWs()
+        }
+    }
+}
