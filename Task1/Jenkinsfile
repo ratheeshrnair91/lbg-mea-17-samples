@@ -13,9 +13,11 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh "echo Testing..."
-                sh "sleep 5"
-                sh "echo PASSED"
+                sh "docker network create test || true"
+                sh "docker run -d --name test-app --network test -e YOUR_NAME=$YOUR_NAME $REGISTRY/task1-app:$VERSION"
+                sh "docker run --network test -e HOST=test-app -v $(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'"
+                sh "docker stop \$(docker ps -q) || true"
+                sh "docker rm \$(docker ps -aq) || true"
             }
         }
         stage('Push') {
