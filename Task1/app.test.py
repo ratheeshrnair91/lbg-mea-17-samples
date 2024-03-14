@@ -3,7 +3,8 @@ import requests
 import os
 
 HOST = os.getenv('HOST', 'test')
-BASE_URL = f"http://{HOST}:5500"
+PORT = os.getenv('PORT', 5500)
+BASE_URL = f"http://{HOST}:{PORT}"
 
 class TestApp(unittest.TestCase):
     def test_app_response(self):
