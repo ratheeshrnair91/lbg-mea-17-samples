@@ -22,8 +22,8 @@ pipeline {
         stage('Push') {
             steps {
                 sh "gcloud config set account ratheesh-storage-admin@lbg-mea-17.iam.gserviceaccount.com"
-                sh "docker push $REGISTRY/task2-db:$VERSION"
-                sh "docker push $REGISTRY/task2-app:$VERSION"
+                sh "docker push $REGISTRY/ratheesh-task2-db:$VERSION"
+                sh "docker push $REGISTRY/ratheesh-task2-app:$VERSION"
             }
         }
         stage('Deploy') {
