@@ -8,8 +8,8 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh "docker build -t $REGISTRY/task2-db:$VERSION Task2/db"
-                sh "docker build -t $REGISTRY/task2-app:$VERSION Task2/flask-app"
+                sh "docker build -t $REGISTRY/ratheesh-task2-db:$VERSION Task2/db"
+                sh "docker build -t $REGISTRY/ratheesh-task2-app:$VERSION Task2/flask-app"
             }
         }
         stage('Test') {
@@ -21,14 +21,14 @@ pipeline {
         }
         stage('Push') {
             steps {
-                sh "gcloud config set account agray-container-registry@lbg-mea-17.iam.gserviceaccount.com"
+                sh "gcloud config set account ratheesh-storage-admin@lbg-mea-17.iam.gserviceaccount.com"
                 sh "docker push $REGISTRY/task2-db:$VERSION"
                 sh "docker push $REGISTRY/task2-app:$VERSION"
             }
         }
         stage('Deploy') {
             steps {
-                sh "gcloud config set account jenkins-k8s@lbg-mea-17.iam.gserviceaccount.com"
+                sh "gcloud config set account ratheesh-jenkins-kubernetes@lbg-mea-17.iam.gserviceaccount.com"
                 sh "kubectl create ns task2 || true"
                 sh "sed -e 's,{{MYSQL_ROOT_PASSWORD}},'$MYSQL_ROOT_PASSWORD',g;' Task2/db-password.yml | kubectl apply -f - --namespace task2"
                 sh "sed -e 's,{{VERSION}},'$VERSION',g;' Task2/manifests/app-manifest.yml | tee Task2/manifests/app-manifest.yaml"
