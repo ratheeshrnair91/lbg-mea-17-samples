@@ -37,8 +37,7 @@ pipeline {
                 rm Task1/app-replicas-manifest.yml
                 kubectl apply -f Task1 --namespace task1-test
                 sleep 60
-                export HOST=\$(kubectl get service nginx-service --namespace task1-test -o json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"')
-                docker run -e HOST=$HOST -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'
+                docker run -e HOST=\$(kubectl get service nginx-service --namespace task1-test -o json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"') -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'
                 docker stop \$(docker ps -q) || true
                 docker rm \$(docker ps -aq) || true
                 """
