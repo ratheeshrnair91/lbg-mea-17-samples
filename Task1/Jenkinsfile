@@ -15,7 +15,7 @@ pipeline {
             steps {
                 sh "docker network create test || true"
                 sh "docker run -d --name test-app --network test -e YOUR_NAME=$YOUR_NAME $REGISTRY/task1-app:$VERSION"
-                sh "docker run --network test -e HOST=test-app -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'"
+                sh "docker run --network test -e PORT=5500 -e HOST=test-app -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'"
                 sh "docker stop \$(docker ps -q) || true"
                 sh "docker rm \$(docker ps -aq) || true"
             }
@@ -37,7 +37,7 @@ pipeline {
                 rm Task1/app-replicas-manifest.yml
                 kubectl apply -f Task1 --namespace task1-test
                 sleep 60
-                docker run -e HOST=\$(kubectl get service nginx-service --namespace task1-test -o json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"') -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'
+                docker run -e PORT=80 -e HOST=\$(kubectl get service nginx-service --namespace task1-test -o json | jq '.status.loadBalancer.ingress[0].ip' | tr -d '"') -v \$(pwd)/Task1:/app python:latest sh -c 'pip3 install -r /app/requirements.txt && python3 /app/app.test.py'
                 docker stop \$(docker ps -q) || true
                 docker rm \$(docker ps -aq) || true
                 """
