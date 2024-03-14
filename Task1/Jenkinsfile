@@ -3,7 +3,7 @@ pipeline {
     environment {
         REGISTRY = "eu.gcr.io/lbg-mea-17"
         VERSION = "v2"
-        YOUR_NAME = "Jenkins"
+        YOUR_NAME = "JenkinsKubernetes"
     }
     stages {
         stage('Build') {
